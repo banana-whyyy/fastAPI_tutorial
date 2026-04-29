@@ -1,15 +1,30 @@
 # Создание таблиц в базе данных
-from sqlmodel import Field, Relationship, SQLModel
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey, Integer, String
+from typing import List
+from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 
 
-class Author(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    name: str = Field(index=True)
-    books: list["Book"] = Relationship(back_populates="author")
+class Base(DeclarativeBase):
+    pass
 
 
-class Book(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    title: str = Field(index=True)
-    author_id: int | None = Field(default=None, foreign_key="author.id")
-    author: Author | None = Relationship(back_populates="books")
+class Author(Base):
+    __tablename__ = "author"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String, index=True)
+    books: Mapped[List["Book"]] = relationship(back_populates="author")
+
+
+class Book(Base):
+    __tablename__ = "book"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String, index=True)
+    author_id: Mapped[int] = mapped_column(ForeignKey("author.id"))
+    author:  Mapped["Author"] = relationship(back_populates="books")
+
+
+class User(SQLAlchemyBaseUserTableUUID, Base):
+    nickname: Mapped[str] = mapped_column(String, index=True)
